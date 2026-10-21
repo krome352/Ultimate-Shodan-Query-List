@@ -22,7 +22,7 @@
 - [08 — Network Services](#08--network-services)
 - [09 — Known Vulnerabilities & CVEs](#09--known-vulnerabilities--cves)
 - [10 — Misconfigurations & Information Disclosure](#10--misconfigurations--information-disclosure)
-
+- [11 - Extras](#11--Extras)
 ---
 
 ## 01 — Default Credentials & Authentication
@@ -255,27 +255,30 @@ Individual search terms are useful for exploration. Shodan filters can help narr
 | `http.component:` | `http.component:"WordPress"` | Match a detected web component |
 | `vuln:` | `vuln:CVE-2021-44228` | Search vulnerability data where supported |
 
-## 11 - Extras
-| 101 | http.title:"Index of" | Find web pages with directory listing enabled |
-| 102 | http.title:"Directory listing" | Alternative directory listing title pattern |
-| 103 | http.title:"Index of" "password" | Find directories exposing password-related files |
-| 104 | http.title:"Index of" "config" | Find directories exposing configuration files |
-| 105 | http.title:"Index of" ".git" | Find exposed Git repositories |
-| 106 | http.title:"Index of" ".env" | Find exposed environment variable files |
-| 107 | http.title:"Index of" "backup" | Find directories exposing backup files |
-| 108 | http.title:"Index of" "log" | Find directories exposing log files |
-| 109 | http.html:"Python 2.6" | Find servers running outdated Python 2.6.x |
-| 110 | http.html:"Python 2.7" | Find servers running outdated Python 2.7.x |
-| 111 | http.html:"Dojo" | Find servers using the Dojo JavaScript framework |
-| 112 | http.html:"Django 1." | Find servers running outdated Django 1.x |
-| 113 | http.html:"Flask" | Find servers using Flask framework |
-| 114 | http.title:"wireless" | Find wireless controller login pages |
-| 115 | http.title:"login" "wireless" | Find wireless authentication interfaces |
-| 116 | http.title:"access point" | Find access point management interfaces |
-| 117 | http.title:"Index of" "Python" | Find directories exposing Python scripts |
-| 118 | http.title:"Index of" "database" | Find directories exposing database files |
-| 119 | http.title:"Index of" "credential" | Find directories exposing credential files |
-| 120 | http.title:"Index of" "secret" | Find directories exposing secret files |
+## 11. Extras
+
+| ID | Shodan Query | Description |
+|:--:|:---|:---|
+| `101` | `http.title:"Index of"` | Find directory listings |
+| `102` | `http.title:"Directory listing"` | Alternative directory listing title |
+| `103` | `http.title:"Index of" "password"` | Find password-related files |
+| `104` | `http.title:"Index of" "config"` | Find exposed configuration files |
+| `105` | `http.title:"Index of" ".git"` | Find exposed Git repositories |
+| `106` | `http.title:"Index of" ".env"` | Find exposed environment files |
+| `107` | `http.title:"Index of" "backup"` | Find exposed backup files |
+| `108` | `http.title:"Index of" "log"` | Find exposed log files |
+| `109` | `http.html:"Python 2.6"` | Identify references to outdated Python 2.6.x |
+| `110` | `http.html:"Python 2.7"` | Identify references to outdated Python 2.7.x |
+| `111` | `http.html:"Dojo"` | Find pages referencing the Dojo JavaScript framework |
+| `112` | `http.html:"Django 1."` | Identify references to Django 1.x |
+| `113` | `http.html:"Flask"` | Find pages referencing Flask |
+| `114` | `http.title:"wireless"` | Find wireless controller login pages |
+| `115` | `http.title:"login" "wireless"` | Find wireless authentication interfaces |
+| `116` | `http.title:"access point"` | Find access point management pages |
+| `117` | `http.title:"Index of" "Python"` | Find directory listings containing Python files |
+| `118` | `http.title:"Index of" "database"` | Find directory listings containing database files |
+| `119` | `http.title:"Index of" "credential"` | Find directory listings containing credential-related files |
+| `120` | `http.title:"Index of" "secret"` | Find directory listings containing secret-related files |
 
 **Example — Authorized web-service inventory**
 
