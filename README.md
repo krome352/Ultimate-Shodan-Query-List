@@ -1,327 +1,420 @@
+# 🔎 Shodan Filter Masterlist
 
-# ⌕ Ultimate Shodan Query Reference
+> A structured reference to Shodan search filters, query syntax, network metadata, HTTP, SSL/TLS, SSH, and defensive attack-surface discovery.
 
-> **A Cybersecurity Reconnaissance Field Guide**
->
-> A categorized reference to Shodan search queries for discovering internet-exposed services, identifying potentially vulnerable technologies, and investigating security misconfigurations.
->
-> **Version:** 1.0  
-> **Focus:** Asset Discovery · Service Enumeration · Vulnerability Research · Exposure Analysis
+![Shodan](https://img.shields.io/badge/Shodan-Search%20Reference-1f6feb?style=for-the-badge)
+![Markdown](https://img.shields.io/badge/Format-GitHub%20Markdown-181717?style=for-the-badge)
+![Purpose](https://img.shields.io/badge/Focus-OSINT%20%26%20Asset%20Discovery-238636?style=for-the-badge)
 
 ---
 
-## Table of Contents
+## 📑 Table of Contents
 
-- [01 — Default Credentials & Authentication](#01--default-credentials--authentication)
-- [02 — Web Servers & Applications](#02--web-servers--applications)
-- [03 — Database Services](#03--database-services)
-- [04 — Remote Access Services](#04--remote-access-services)
-- [05 — Internet of Things (IoT)](#05--internet-of-things-iot)
-- [06 — Industrial Control Systems](#06--industrial-control-systems)
-- [07 — Cloud Services & API Exposure](#07--cloud-services--api-exposure)
-- [08 — Network Services](#08--network-services)
-- [09 — Known Vulnerabilities & CVEs](#09--known-vulnerabilities--cves)
-- [10 — Misconfigurations & Information Disclosure](#10--misconfigurations--information-disclosure)
-- [11 - Extras](#11--Extras)
----
-
-## 01 — Default Credentials & Authentication
-
-**Objective:** Identify services that may expose authentication weaknesses or insecure access configurations.
-
-| # | Query | Purpose |
-|---:|---|---|
-| 01 | `default password` | Search for banners mentioning default passwords |
-| 02 | `password:admin` | Search for indexed authentication-related text |
-| 03 | `password:123456` | Search for a commonly used weak password string |
-| 04 | `password:password` | Search for the literal password string |
-| 05 | `authorization:Basic` | Identify responses containing Basic authentication metadata |
-| 06 | `port:21 "anonymous"` | Investigate FTP services mentioning anonymous access |
-| 07 | `port:23` | Discover Telnet services |
-| 08 | `port:22 "password"` | Search SSH banners or indexed text for password references |
-| 09 | `port:5900` | Discover VNC services for authorized configuration auditing |
-| 10 | `port:27017` | Discover MongoDB services for authentication and exposure checks |
-
-**Analyst note:** Search results containing password-related strings do not establish that valid credentials are present or that authentication can be bypassed.
+- [Overview](#-overview)
+- [Query Syntax](#-query-syntax)
+- [General Filters](#-general-filters)
+- [Network and Location Filters](#-network-and-location-filters)
+- [Software and Vulnerability Filters](#-software-and-vulnerability-filters)
+- [HTTP Filters](#-http-filters)
+- [SSL/TLS Filters](#-ssltls-filters)
+- [SSH Filters](#-ssh-filters)
+- [Screenshot Filters](#-screenshot-filters)
+- [Useful Search Queries](#-useful-search-queries)
+- [Filter Discovery Through the API](#-filter-discovery-through-the-api)
+- [Important Notes](#-important-notes)
+- [Official Documentation](#-official-documentation)
 
 ---
 
-## 02 — Web Servers & Applications
+## 📖 Overview
 
-**Objective:** Discover web applications, administrative interfaces, development environments, and potential information-disclosure issues.
+Shodan indexes information collected from internet-connected services. Its search engine lets you query service banners and associated metadata using filters.
 
-| # | Query | Purpose |
-|---:|---|---|
-| 11 | `http.title:"Index of"` | Find web pages that may expose directory listings |
-| 12 | `http.title:"admin"` | Discover pages with admin-related titles |
-| 13 | `http.component:"phpMyAdmin"` | Identify detected phpMyAdmin deployments |
-| 14 | `http.component:"WordPress"` | Identify WordPress installations |
-| 15 | `http.component:"Joomla"` | Identify Joomla installations |
-| 16 | `http.component:"Drupal"` | Identify Drupal installations |
-| 17 | `http.vulnerability:*` | Search for results associated with Shodan's vulnerability data |
-| 18 | `http.title:"error"` | Find pages with error-related titles |
-| 19 | `http.title:"test"` | Find pages potentially associated with test environments |
-| 20 | `http.title:"backup"` | Find pages with backup-related titles |
-| 21 | `http.title:"index of" "password"` | Find pages with backup-related titles |
+A filter follows this general format:
 
-**Analyst note:** Titles and component fingerprints are clues, not vulnerability confirmations. Verify software versions, deployment context, and the presence of an actual security weakness.
+```text
+filter:value
+```
 
----
+Example:
 
-## 03 — Database Services
+```text
+port:443 country:US
+```
 
-**Objective:** Identify database technologies exposed to the public internet and assess whether their exposure is intentional.
+This query combines two conditions: port `443` and country code `US`.
 
-| # | Query | Service |
-|---:|---|---|
-| 21 | `port:27017` | MongoDB |
-| 22 | `port:6379` | Redis |
-| 23 | `port:9200` | Elasticsearch |
-| 24 | `port:5984` | CouchDB |
-| 25 | `port:11211` | Memcached |
-| 26 | `port:3306` | MySQL |
-| 27 | `port:5432` | PostgreSQL |
-| 28 | `port:1521` | Oracle Database |
-| 29 | `port:9042` | Apache Cassandra native transport |
-| 30 | `port:7474` | Neo4j HTTP interface |
-
-**Analyst note:** A reachable database is not necessarily misconfigured. Investigate authentication requirements, network restrictions, TLS, access controls, and whether the service is intended to be publicly reachable.
+**Important:** Shodan has multiple products and datasets. A filter available in Shodan Search may not be available in Shodan Trends. The reference below separates documented Trends filters from other commonly used Search filters.
 
 ---
 
-## 04 — Remote Access Services
+## 🧠 Query Syntax
 
-**Objective:** Locate remote administration services and assess their exposure, configuration, and patch status.
+| Syntax | Example | Purpose |
+|:---|:---|:---|
+| `filter:value` | `port:443` | Filter by a specific property |
+| `"..."` | `org:"Example Corporation"` | Quote values containing spaces |
+| `,` | `product:Apache,nginx` | Match alternative values for a filter |
+| `>` | `port:>1024` | Numeric greater-than comparison |
+| `<` | `port:<1024` | Numeric less-than comparison |
+| `>=` | `port:>=1024` | Numeric greater-than or equal comparison, where supported |
+| `<=` | `port:<=1024` | Numeric less-than or equal comparison, where supported |
 
-| # | Query | Purpose |
-|---:|---|---|
-| 31 | `port:3389` | Remote Desktop Protocol (RDP) |
-| 32 | `port:5900` | VNC remote desktop |
-| 33 | `TeamViewer` | Search for TeamViewer-related service fingerprints |
-| 34 | `AnyDesk` | Search for AnyDesk-related fingerprints |
-| 35 | `Ammyy` | Search for Ammyy Admin references |
-| 36 | `port:22` | SSH service discovery |
-| 37 | `port:23 "login"` | Telnet login prompts |
-| 38 | `pcAnywhere` | Search for pcAnywhere-related fingerprints |
-| 39 | `remote access` | Search indexed banners for remote-access references |
-| 40 | `remote administration` | Search for remote administration references |
+Multiple filters can be combined to narrow results:
 
-**Analyst note:** Product-name searches may be incomplete or imprecise. Confirm the protocol, product version, exposure, and patch level before classifying a finding as a vulnerability.
+```text
+country:US port:443 product:nginx
+```
 
----
-
-## 05 — Internet of Things (IoT)
-
-**Objective:** Discover connected-device technologies and investigate unnecessary public exposure.
-
-| # | Query | Device category |
-|---:|---|---|
-| 41 | `webcam` | Web cameras |
-| 42 | `camera` | Security and network cameras |
-| 43 | `printer` | Network printers |
-| 44 | `IoT` | General Internet of Things references |
-| 45 | `smart home` | Smart-home devices |
-| 46 | `router` | Network routers |
-| 47 | `DVR` | Digital video recorders |
-| 48 | `NVR` | Network video recorders |
-| 49 | `baby monitor` | Networked baby-monitor references |
-| 50 | `smart TV` | Smart televisions |
-
-**Analyst note:** These are broad discovery terms. Results may include product descriptions, false positives, and unrelated banners. Restrict investigations to systems you own or are authorized to assess.
+Shodan's documented syntax supports comma-separated alternatives and numeric ranges. Check the official query guide for additional syntax details.
 
 ---
 
-## 06 — Industrial Control Systems
+## 🌐 General Filters
 
-**Objective:** Understand the external exposure of industrial, operational-technology, and building-automation infrastructure.
-
-| # | Query | Technology |
-|---:|---|---|
-| 51 | `SCADA` | Supervisory Control and Data Acquisition |
-| 52 | `PLC` | Programmable Logic Controllers |
-| 53 | `Modbus` | Industrial communications protocol |
-| 54 | `BACnet` | Building automation communications |
-| 55 | `Siemens` | Siemens industrial technology |
-| 56 | `Schneider Electric` | Schneider Electric equipment |
-| 57 | `Allen-Bradley` | Rockwell Automation equipment |
-| 58 | `Honeywell` | Honeywell industrial and automation systems |
-| 59 | `GE Fanuc` | Legacy GE Fanuc control systems |
-| 60 | `Mitsubishi` | Mitsubishi industrial technology |
-
-**Analyst note:** Industrial systems require extra caution. Do not probe, authenticate to, modify, or interact with live control systems without explicit authorization and a defined safety plan. Search results alone are sufficient for initial passive research.
-
----
-
-## 07 — Cloud Services & API Exposure
-
-**Objective:** Investigate possible cloud-storage exposure, leaked secrets, and publicly indexed API-related information.
-
-| # | Query | Purpose |
-|---:|---|---|
-| 61 | `Amazon S3` | Search for S3-related references |
-| 62 | `Azure Blob Storage` | Search for Azure storage references |
-| 63 | `Google Cloud` | Search for Google Cloud references |
-| 64 | `api key` | Search for API-key-related text |
-| 65 | `AWS secret` | Search for AWS-secret-related references |
-| 66 | `private key` | Search for private-key-related text |
-| 67 | `JWT` | Search for JSON Web Token references |
-| 68 | `OAuth` | Search for OAuth-related references |
-| 69 | `GitHub token` | Search for GitHub-token-related text |
-| 70 | `Slack token` | Search for Slack-token-related text |
-
-**Analyst note:** These terms do not guarantee that secrets are present, valid, or usable. Avoid collecting, testing, or using third-party credentials. For defensive audits, use authorized cloud inventory tools and secret-scanning tools against your own repositories and assets.
+| Filter | Example | Description |
+|:---|:---|:---|
+| `all` | `all:"example"` | Search across supported indexed fields |
+| `asn` | `asn:AS15169` | Autonomous system number |
+| `city` | `city:"Atlanta"` | City |
+| `country` | `country:US` | Two-letter country code |
+| `cpe` | `cpe:"cpe:/a:vendor:product"` | Common Platform Enumeration identifier |
+| `has_ipv6` | `has_ipv6:true` | IPv6-related metadata |
+| `hash` | `hash:123456789` | Service banner hash |
+| `hostname` | `hostname:example.com` | Hostname |
+| `ip` | `ip:203.0.113.10` | IP address |
+| `isp` | `isp:"Example ISP"` | Internet service provider |
+| `net` | `net:203.0.113.0/24` | Network range in CIDR notation |
+| `org` | `org:"Example Organization"` | Organization |
+| `os` | `os:Linux` | Identified operating system |
+| `port` | `port:443` | Service port |
+| `product` | `product:nginx` | Detected product |
+| `region` | `region:"California"` | Region, where supported |
+| `state` | `state:CA` | State metadata, where supported |
+| `tag` | `tag:cloud` | Shodan tag |
+| `version` | `version:1.2.3` | Detected software version |
+| `has_ssl` | `has_ssl:true` | SSL-related metadata |
+| `has_screenshot` | `has_screenshot:true` | Results with screenshot data |
+| `vuln` | `vuln:CVE-2024-0000` | Match a specified vulnerability identifier, where supported |
+| `has_vuln` | `has_vuln:true` | Vulnerability-related metadata |
 
 ---
 
-## 08 — Network Services
+## 📍 Network and Location Filters
 
-**Objective:** Discover commonly exposed network protocols and identify services that may need stronger access controls.
+| Filter | Example | Description |
+|:---|:---|:---|
+| `ip` | `ip:203.0.113.10` | Match an IP address |
+| `net` | `net:203.0.113.0/24` | Match a CIDR range |
+| `asn` | `asn:AS15169` | Match an autonomous system |
+| `org` | `org:"Example Corporation"` | Match an organization |
+| `isp` | `isp:"Example ISP"` | Match an ISP |
+| `hostname` | `hostname:example.com` | Match a hostname |
+| `country` | `country:GB` | Match a country code |
+| `city` | `city:"London"` | Match a city |
+| `state` | `state:NY` | Match state metadata |
+| `region` | `region:"New York"` | Match region metadata |
 
-| # | Query | Service |
-|---:|---|---|
-| 71 | `port:445` | SMB |
-| 72 | `port:139` | NetBIOS session service |
-| 73 | `port:389` | LDAP |
-| 74 | `port:161` | SNMP |
-| 75 | `port:21` | FTP |
-| 76 | `port:69` | TFTP |
-| 77 | `port:23` | Telnet |
-| 78 | `port:514` | Syslog or legacy remote-shell-related services, depending on configuration |
-| 79 | `rexec` | Search for remote-execution service references |
-| 80 | `port:6000` | X11-related services |
+### Common port reference
 
-**Analyst note:** Port numbers are useful starting points, not definitive service identification. Some protocols use different ports, and unrelated services can run on the same port. Confirm service fingerprints before drawing conclusions.
+| Port | Common service |
+|---:|:---|
+| `21` | FTP |
+| `22` | SSH |
+| `25` | SMTP |
+| `53` | DNS |
+| `80` | HTTP |
+| `110` | POP3 |
+| `143` | IMAP |
+| `443` | HTTPS |
+| `445` | SMB |
+| `587` | SMTP submission |
+| `993` | IMAPS |
+| `995` | POP3S |
+| `1433` | Microsoft SQL Server |
+| `3306` | MySQL |
+| `3389` | RDP |
+| `5432` | PostgreSQL |
+| `5900` | VNC |
+| `6379` | Redis |
+| `8080` | Alternate HTTP |
+| `8443` | Alternate HTTPS |
+| `9200` | Elasticsearch, commonly |
 
----
-
-## 09 — Known Vulnerabilities & CVEs
-
-**Objective:** Research known vulnerabilities and identify potentially affected software for authorized asset assessments.
-
-A CVE (Common Vulnerabilities and Exposures) is an identifier assigned to a publicly disclosed vulnerability.
-
-| # | CVE | Vulnerability / affected technology |
-|---:|---|---|
-| 81 | `CVE-2017-0144` | EternalBlue — Microsoft SMBv1 |
-| 82 | `CVE-2019-0708` | BlueKeep — Remote Desktop Services |
-| 83 | `CVE-2021-44228` | Log4Shell — Apache Log4j |
-| 84 | `CVE-2020-1472` | Zerologon — Netlogon |
-| 85 | `CVE-2019-11089` | Verify the CVE identifier and affected product before using this entry |
-| 86 | `CVE-2020-0688` | Microsoft Exchange Server |
-| 87 | `CVE-2017-10271` | Oracle WebLogic Server |
-| 88 | `CVE-2016-10033` | PHPMailer remote code execution vulnerability |
-| 89 | `CVE-2014-0160` | Heartbleed — OpenSSL |
-| 90 | `CVE-2018-14340` | Verify the identifier and product association before using this entry |
-
-**Analyst note:** A CVE identifier is not automatically a valid Shodan search filter. Check Shodan's current search syntax and vulnerability data support. Where supported, a query such as `vuln:CVE-2021-44228` may be useful; verify the syntax in Shodan's documentation.
-
-A detected vulnerability may be a false positive or may not apply to the installed version or configuration. Confirm affected versions using trusted advisories and your own authorized asset inventory.
-
----
-
-## 10 — Misconfigurations & Information Disclosure
-
-**Objective:** Find signs of exposed development infrastructure, configuration files, and potentially sensitive information.
-
-| # | Query | Purpose |
-|---:|---|---|
-| 91 | `debug` | Search for debug-related references |
-| 92 | `test` | Search for test-environment references |
-| 93 | `development` | Search for development-environment references |
-| 94 | `staging` | Search for staging-environment references |
-| 95 | `git` | Search for Git-related references |
-| 96 | `.env` | Search for environment-file references |
-| 97 | `.git` | Search for Git metadata references |
-| 98 | `wp-config` | Search for WordPress configuration references |
-| 99 | `database password` | Search for database-password-related text |
-| 100 | `credentials` | Search for credential-related references |
-
-**Analyst note:** Shodan indexes observable service data; a keyword match does not necessarily mean a file is publicly retrievable. Never attempt to access or download exposed secrets belonging to third parties.
+> A port number alone does not prove which service is running. Validate the returned banner and protocol metadata.
 
 ---
 
-## Query Engineering — Improving Search Precision
+## 🧩 Software and Vulnerability Filters
 
-Individual search terms are useful for exploration. Shodan filters can help narrow results when their syntax is supported for the relevant data type.
+| Filter | Example | Description |
+|:---|:---|:---|
+| `product` | `product:OpenSSH` | Match a detected software product |
+| `version` | `version:9.0` | Match a reported software version |
+| `os` | `os:Linux` | Match operating-system metadata |
+| `cpe` | `cpe:"cpe:/a:vendor:product"` | Match a CPE identifier |
+| `vuln` | `vuln:CVE-2024-0000` | Search for vulnerability-related records |
+| `has_vuln` | `has_vuln:true` | Match records with vulnerability metadata |
 
-| Filter | Example | Function |
-|---|---|---|
-| `port:` | `port:443` | Match a port |
-| `country:` | `country:US` | Restrict results by country |
-| `city:` | `city:Atlanta` | Narrow by city metadata |
-| `org:` | `org:"Example Organization"` | Match organization metadata |
-| `product:` | `product:nginx` | Match a detected product |
-| `http.title:` | `http.title:"Dashboard"` | Match an HTTP page title |
-| `http.component:` | `http.component:"WordPress"` | Match a detected web component |
-| `vuln:` | `vuln:CVE-2021-44228` | Search vulnerability data where supported |
+### Example queries
 
-## 11. Extras
+```text
+product:nginx
+```
 
-| ID | Shodan Query | Description |
-|:--:|:---|:---|
-| `101` | `http.title:"Index of"` | Find directory listings |
-| `102` | `http.title:"Directory listing"` | Alternative directory listing title |
-| `103` | `http.title:"Index of" "password"` | Find password-related files |
-| `104` | `http.title:"Index of" "config"` | Find exposed configuration files |
-| `105` | `http.title:"Index of" ".git"` | Find exposed Git repositories |
-| `106` | `http.title:"Index of" ".env"` | Find exposed environment files |
-| `107` | `http.title:"Index of" "backup"` | Find exposed backup files |
-| `108` | `http.title:"Index of" "log"` | Find exposed log files |
-| `109` | `http.html:"Python 2.6"` | Identify references to outdated Python 2.6.x |
-| `110` | `http.html:"Python 2.7"` | Identify references to outdated Python 2.7.x |
-| `111` | `http.html:"Dojo"` | Find pages referencing the Dojo JavaScript framework |
-| `112` | `http.html:"Django 1."` | Identify references to Django 1.x |
-| `113` | `http.html:"Flask"` | Find pages referencing Flask |
-| `114` | `http.title:"wireless"` | Find wireless controller login pages |
-| `115` | `http.title:"login" "wireless"` | Find wireless authentication interfaces |
-| `116` | `http.title:"access point"` | Find access point management pages |
-| `117` | `http.title:"Index of" "Python"` | Find directory listings containing Python files |
-| `118` | `http.title:"Index of" "database"` | Find directory listings containing database files |
-| `119` | `http.title:"Index of" "credential"` | Find directory listings containing credential-related files |
-| `120` | `http.title:"Index of" "secret"` | Find directory listings containing secret-related files |
+```text
+product:OpenSSH version:9.0
+```
 
-**Example — Authorized web-service inventory**
+```text
+cpe:"cpe:/a:vendor:product"
+```
 
-`port:443 country:US`
+```text
+has_vuln:true
+```
 
-**Example — Narrowing a technology search**
-
-`http.component:"WordPress" country:US`
-
-**Example — Researching known vulnerability exposure**
-
-`vuln:CVE-2021-44228`
-
-> Filter availability, syntax, and matching behavior can change. Consult the official Shodan search documentation before relying on a query for an assessment.
+**Interpretation note:** A reported version or vulnerability match is not proof that a device is exploitable. Confirm the software, configuration, patch status, and applicability before drawing conclusions.
 
 ---
 
-## Operational Workflow
+## 🌍 HTTP Filters
 
-1. **Define scope.** Identify the organization, IP ranges, domains, or assets you are authorized to investigate.
-2. **Discover.** Search for services and technologies associated with that scope.
-3. **Classify.** Distinguish ordinary exposure from a potential misconfiguration or known vulnerability.
-4. **Corroborate.** Check software versions, vendor advisories, configuration records, and trusted vulnerability references.
-5. **Document.** Record the query, timestamp, observed evidence, confidence level, and potential impact.
-6. **Remediate.** Restrict unnecessary exposure, patch affected software, rotate exposed secrets, and improve access controls.
-7. **Reassess.** Repeat the authorized inventory to confirm that the exposure has been addressed.
+| Filter | Example | Description |
+|:---|:---|:---|
+| `http.component` | `http.component:WordPress` | Detected web component |
+| `http.component_category` | `http.component_category:CMS` | Web component category |
+| `http.favicon.hash` | `http.favicon.hash:123456789` | Favicon hash |
+| `http.html_hash` | `http.html_hash:123456789` | Indexed HTML hash |
+| `http.robots_hash` | `http.robots_hash:123456789` | `robots.txt` hash |
+| `http.securitytxt` | `http.securitytxt:true` | Security.txt-related metadata |
+| `http.status` | `http.status:200` | HTTP status code |
+| `http.title` | `http.title:"Login"` | Page title |
+| `http.waf` | `http.waf:Cloudflare` | Detected web application firewall |
+
+### Example queries
+
+```text
+http.title:"Login"
+```
+
+```text
+http.status:403
+```
+
+```text
+http.component:WordPress
+```
+
+```text
+http.waf:Cloudflare
+```
+
+```text
+http.securitytxt:true
+```
 
 ---
 
-## Important Notes
+## 🔐 SSL/TLS Filters
 
-- **Exposure ≠ vulnerability.** A public service may be intentionally exposed and securely configured.
-- **Search results ≠ proof.** Banners, titles, product fingerprints, and vulnerability detections can be incomplete or inaccurate.
-- **Protect sensitive data.** Do not retrieve, disclose, or use third-party credentials, private keys, or other secrets.
-- **Respect authorization.** Keep active verification within systems you own or have explicit permission to test.
-- **Validate the reference.** Confirm CVE identifiers, product associations, and Shodan filter syntax against authoritative sources.
+| Filter | Example | Description |
+|:---|:---|:---|
+| `ssl` | `ssl:example.com` | Search supported SSL/TLS fields |
+| `ssl.alpn` | `ssl.alpn:h2` | Application-Layer Protocol Negotiation |
+| `ssl.version` | `ssl.version:TLSv1.3` | Reported TLS version |
+| `ssl.cert.fingerprint` | `ssl.cert.fingerprint:abcdef123456` | Certificate fingerprint |
+| `ssl.cert.issuer.cn` | `ssl.cert.issuer.cn:"Example CA"` | Certificate issuer common name |
+| `ssl.cert.subject.cn` | `ssl.cert.subject.cn:example.com` | Certificate subject common name |
+| `ssl.cert.serial` | `ssl.cert.serial:123456789` | Certificate serial number |
+| `ssl.jarm` | `ssl.jarm:examplehash` | JARM fingerprint |
+| `ssl.ja3s` | `ssl.ja3s:examplehash` | JA3S fingerprint |
 
-**Primary reference:** [Shodan Search Query Fundamentals](https://help.shodan.io/the-basics/search-query-fundamentals)
+### Example queries
 
-**Additional reference:** [Shodan Help Center](https://help.shodan.io/)
+```text
+ssl.cert.subject.cn:example.com
+```
+
+```text
+ssl.cert.issuer.cn:"Example CA"
+```
+
+```text
+ssl.version:TLSv1.3
+```
+
+```text
+ssl.alpn:h2
+```
+
+> Certificate and fingerprint matching depends on indexed metadata and the exact filter implementation.
 
 ---
 
-*End of reference — Ultimate Shodan Query List*
+## 🔑 SSH Filters
 
-~ VantaSEC
+| Filter | Example | Description |
+|:---|:---|:---|
+| `ssh.fingerprint` | `ssh.fingerprint:"SHA256:example"` | Match an SSH host-key fingerprint |
+
+Example:
+
+```text
+ssh.fingerprint:"SHA256:example"
+```
+
+Use fingerprints for authorized asset correlation and inventory work. A fingerprint match alone does not establish the identity or trustworthiness of a host.
+
+---
+
+## 🖼️ Screenshot Filters
+
+| Filter | Example | Description |
+|:---|:---|:---|
+| `has_screenshot` | `has_screenshot:true` | Find records with screenshot data |
+| `screenshot.label` | `screenshot.label:desktop` | Match a screenshot classification label |
+
+Example:
+
+```text
+has_screenshot:true
+```
+
+Screenshot availability and supported labels depend on the relevant Shodan product and dataset.
+
+---
+
+## 🔎 Useful Search Queries
+
+The following are examples for learning query composition and conducting authorized inventory research. Replace example values with assets you own or are permitted to assess.
+
+### 1. Search by hostname
+
+```text
+hostname:example.com
+```
+
+### 2. Search by domain
+
+```text
+domain:example.com
+```
+
+### 3. Search by organization
+
+```text
+org:"Example Organization"
+```
+
+### 4. Search HTTPS services
+
+```text
+port:443
+```
+
+### 5. Search for a web technology
+
+```text
+product:nginx
+```
+
+### 6. Search HTTP metadata
+
+```text
+http.title:"Dashboard"
+```
+
+### 7. Search certificate metadata
+
+```text
+ssl.cert.subject.cn:example.com
+```
+
+### 8. Combine multiple filters
+
+```text
+hostname:example.com port:443
+```
+
+### 9. Search screenshot-bearing records
+
+```text
+has_screenshot:true
+```
+
+### 10. Search vulnerability metadata
+
+```text
+has_vuln:true
+```
+
+---
+
+## 🧰 Filter Discovery Through the API
+
+**This is the authoritative way to obtain the live filter list for your account and the selected Shodan API product.**
+
+Shodan documents the Search API endpoint:
+
+```text
+GET https://api.shodan.io/shodan/host/search/filters?key=YOUR_API_KEY
+```
+
+The Trends API has its own filter endpoint:
+
+```text
+GET https://trends.shodan.io/api/v1/search/filters?key=YOUR_API_KEY
+```
+
+These endpoints return filter names, not a complete tutorial for every filter. Use the corresponding product's documentation to learn each filter's supported values.
+
+### Retrieve the main Search API filter list
+
+Using `curl` with an API key stored in an environment variable:
+
+```bash
+curl -sS \
+  "https://api.shodan.io/shodan/host/search/filters?key=${SHODAN_API_KEY}"
+```
+
+Set `SHODAN_API_KEY` in your local environment before running the command. Do not commit API keys to GitHub.
+
+### Retrieve the Trends filter list
+
+```bash
+curl -sS \
+  "https://trends.shodan.io/api/v1/search/filters?key=${SHODAN_API_KEY}"
+```
+
+> **Important:** The main Search API and Trends API expose different filter sets. Do not combine their results and label the combined list as universally supported.
+
+---
+
+## ⚠️ Important Notes
+
+- Shodan indexes observed service information; results may be outdated.
+- Filter availability can differ by product, dataset, and account permissions.
+- A filter name appearing in one API does not guarantee that it works in every Shodan interface.
+- Software version matches are not proof of vulnerability.
+- Use Shodan responsibly for defensive research and authorized asset discovery.
+- Never publish API keys, private tokens, or sensitive organization data in a public repository.
+
+---
+
+## 📚 Official Documentation
+
+| Resource | Purpose |
+|:---|:---|
+| [Shodan Search Filters](https://www.shodan.io/search/filters) | Main search filter reference |
+| [Search Query Fundamentals](https://help.shodan.io/the-basics/search-query-fundamentals) | Query syntax and filter behavior |
+| [Shodan Book: Query Syntax](https://book.shodan.io/getting-started/query-syntax/) | Search syntax guide |
+| [Shodan REST API](https://developer.shodan.io/api) | API endpoints and filter discovery |
+| [Shodan Trends Filters](https://trends.shodan.io/search/filters) | Trends-specific filter reference |
+| [Shodan Datapedia](https://datapedia.shodan.io/) | Banner fields and metadata |
+
+---
+
+<p align="center">
+  <sub>Built for learning, OSINT, defensive security, and authorized attack-surface discovery.</sub>
+</p>
